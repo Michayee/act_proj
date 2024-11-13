@@ -9,7 +9,6 @@ simu temp/
 # 忽略的文件
 test*
 temp*
-!template
 
 
 # tamplate from https://github.com/github/gitignore/blob/main/Python.gitignore
