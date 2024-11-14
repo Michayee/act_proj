@@ -135,8 +135,8 @@ def generate_batch(
     return X_next
 
 def bo_turbo(batch_size : int, num_dimensions : int, n_init : int,
-          input_file: str, results_file: str, func_eval_batch : Callable):
-    
+             input_file: str, results_file: str, func_eval_batch : Callable, n_max_eval : int = 10000):
+        
     max_cholesky_size = float("inf") # Always use Cholesky?
     state = TurboState(num_dimensions, batch_size=batch_size, best_value=max(Y_turbo).item())
     
@@ -153,34 +153,37 @@ def bo_turbo(batch_size : int, num_dimensions : int, n_init : int,
         temp_swarm = input_rows.loc[lack_score, [f'x_{i}' for i in range(num_dimensions)]].to_numpy()
         temp_scores = func_eval_batch(temp_swarm)
         input_rows.loc[lack_score, 'score'] = temp_scores
-    else:
-        print('No initial position provided, initial position from Sobol series adopted')
 
-    X_turbo = get_initial_points(num_dimensions, n_init)
-    Y_turbo = torch.tensor(
-        func_eval_batch(X_turbo.tolist()), dtype=dtype, device=device
-    ).unsqueeze(-1)
-
-    if input_rows:
         X_input = torch.tensor(
             input_rows[[f'x_{i}' for i in range(9)]].to_numpy(), dtype=dtype, device=device
             )
         Y_input = torch.tensor(
             input_rows['score'].to_numpy(), dtype=dtype, device=device
             ).unsqueeze(-1)
-        # Append data
-        X_turbo = torch.cat((X_input, X_turbo), dim=0)
-        Y_turbo = torch.cat((Y_input, Y_turbo), dim=0)
+    else:
+        print('No initial position provided, initial position from Sobol series adopted')
+
+    if n_init > 0:
+        X_turbo = get_initial_points(num_dimensions, n_init)
+        Y_turbo = torch.tensor(
+            func_eval_batch(X_turbo.tolist()), dtype=dtype, device=device
+        ).unsqueeze(-1)
+        if input_rows:
+            # Append data
+            X_turbo = torch.cat((X_input, X_turbo), dim=0)
+            Y_turbo = torch.cat((Y_input, Y_turbo), dim=0)
+    else:
+        X_turbo = X_input
+        Y_turbo = Y_input
     
-    new_rows = pd.DataFrame(np.array(X_turbo.tolist()), columns=[f'x_{i}' for i in range(num_dimensions)])
-    # new_rows['score'] = np.array(Y_turbo.tolist())
-    # new_rows = new_rows[['score'] + [f'x_{i}' for i in range(num_dimensions)]]
-    new_rows.insert(0, 'score', Y_turbo)
-    new_rows.to_csv(results_file, float_format='%.5e', index=False)
+    result_df = pd.DataFrame(X_turbo.cpu(), columns=[f'x_{i}' for i in range(num_dimensions)])
+    result_df.insert(0, 'score', Y_turbo.cpu())
+    result_df.to_csv(results_file, float_format='%.5e', index=False)
+    n_eval  = result_df.shape[0]
     
     torch.manual_seed(0)
     
-    while not state.restart_triggered:  # Run until TuRBO converges
+    while (n_eval < n_max_eval) and (not state.restart_triggered):  # Run until TuRBO converges
         # Fit a GP model
         train_Y = (Y_turbo - Y_turbo.mean()) / Y_turbo.std()
         likelihood = GaussianLikelihood(noise_constraint=Interval(1e-8, 1e-3))
@@ -223,10 +226,11 @@ def bo_turbo(batch_size : int, num_dimensions : int, n_init : int,
         X_turbo = torch.cat((X_turbo, X_next), dim=0)
         Y_turbo = torch.cat((Y_turbo, Y_next), dim=0)
 
-        new_rows = pd.DataFrame(np.array(X_turbo.tolist()), columns=[f'x_{i}' for i in range(num_dimensions)])
-        new_rows['score'] = np.array(Y_turbo.tolist())
-        new_rows = new_rows[['score'] + [f'x_{i}' for i in range(num_dimensions)]]
-        new_rows.to_csv(results_file, float_format='%.5e', index=False)
+        result_df = pd.DataFrame(X_turbo.cpu(), columns=[f'x_{i}' for i in range(num_dimensions)])
+        result_df['score'] = np.array(Y_turbo.cpu())
+        result_df = result_df[['score'] + [f'x_{i}' for i in range(num_dimensions)]]
+        result_df.to_csv(results_file, float_format='%.5e', index=False)
+        n_eval  = result_df.shape[0]
     
         # Print current status
         print(
