@@ -530,3 +530,19 @@ class ParaTrans:
     def para2x(self, para):
         para_dict = dict(zip(self.keys, para))
         return [(para_dict[row['var']] - row['min']) / row['range'] for _, row in self.mappable_params.iterrows()]
+
+    def x2para_nl(self, x):
+        # non-linear mapping
+        if len(x) != self.x_len:
+            raise ValueError('Incorrect length of input vector x.')
+        
+        tempdict_para = self.para_temp.copy()
+        for i, row in self.mappable_params.iterrows():
+            tempdict_para[row['var']] = row['min'] * np.exp(x[i] * (np.log(row['max']) - np.log(row['min'])))
+        
+        return [tempdict_para[key] for key in self.keys]
+
+    def para2x_nl(self, para):
+         # non-linear mapping
+        para_dict = dict(zip(self.keys, para))
+        return [(np.log(para_dict[row['var']]) - np.log(row['min'])) /  (np.log(row['max']) - np.log(row['min'])) for _, row in self.mappable_params.iterrows()]
