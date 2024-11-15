@@ -20,44 +20,6 @@ import subprocess
 from typing import List, Dict, Tuple, Union, Callable
 import multiprocessing
 
-# # ---------- abandoned ----------
-# def calculate_n(gamma, tau, staticTau):
-#     if np.all(tau[:2] < 0):
-#         tau = -tau
-#     quarterPoint = [0]
-#     for i in range(1, len(gamma) - 1):
-#         if (gamma[i] - gamma[i-1]) * (gamma[i] - gamma[i+1]) > 0:
-#             quarterPoint.append(i)
-#         if (tau[i] - staticTau) * (tau[i-1] - staticTau) < 0:
-#             quarterPoint.append(i)
-#     quarterPoint.append(len(gamma) - 1)
-
-#     cycle = np.zeros(max(quarterPoint) + 1)
-#     quarterPart = 0
-#     max_tau = max(tau)
-#     l = quarterPoint[quarterPart]
-#     m = quarterPoint[quarterPart + 1]
-
-#     for i in range(len(gamma)):
-#         if i > m:
-#             l = m
-#             quarterPart += 1
-#             m = quarterPoint[quarterPart + 1]
-#         max_tau = tau[l]
-#         if abs(tau[m] - staticTau) > abs(max_tau - staticTau):
-#             max_tau = tau[m]
-        
-#         if abs((tau[i] - staticTau) / (max_tau - staticTau))>1:
-#             tmp = np.arcsin(1) / np.pi / 2
-#         else:
-#             tmp = np.arcsin((tau[i] - staticTau) / (max_tau - staticTau)) / np.pi / 2
-#         if (quarterPart+1) % 2 == 0:
-#             cycle[i] = (quarterPart+1) / 4 - tmp
-#         else:
-#             cycle[i] = tmp + (quarterPart+1) / 4 - 0.25
-
-#     return cycle
-
 def calculate_n(seq: np.ndarray, tau0: float = 0) -> np.ndarray:
     """
     Calculate the normalized phase (n) for a sequence based on zero-crossings and peak values.
@@ -142,8 +104,8 @@ def pp_exe(simu_folder: str, datafile_name: str, cyclic: bool = True):
     Convert them into a .txt with specified colomns
     b alpha are not included
     '''
-    temp_strain = pd.read_table(simu_folder + f"strain0.dat",header=None)
-    temp_stress = pd.read_table(simu_folder + f"stress0.dat",header=None)
+    temp_strain = pd.read_table(os.path.join(simu_folder, f"strain0.dat"),header=None)
+    temp_stress = pd.read_table(os.path.join(simu_folder, f"stress0.dat"),header=None)
 
     sigma_z = - temp_stress[8]
     sigma_r = - temp_stress[4]
@@ -193,12 +155,12 @@ def pp_exe(simu_folder: str, datafile_name: str, cyclic: bool = True):
             temp_df['n'] = temp_n
         except:
             temp_df['n'] = temp_tau * 0.0
-            print(f'error in calculating n for {simu_folder + datafile_name}')
+            print(f'error in calculating n for {os.path.join(simu_folder, datafile_name)}')
     
-    temp_df.to_csv(simu_folder + datafile_name, float_format = '%.5e', index = False)
+    temp_df.to_csv(os.path.join(simu_folder, datafile_name), float_format = '%.5e', index = False)
     
-    os.remove(simu_folder + f"strain0.dat")
-    os.remove(simu_folder + f"stress0.dat")
+    os.remove(os.path.join(simu_folder, f"strain0.dat"))
+    os.remove(os.path.join(simu_folder, f"stress0.dat"))
 
 def clear_exe(simu_folder: str):
     '''
@@ -271,7 +233,7 @@ class ExpTarget:
 
         if os.path.exists(exe_folder):
             for exp_type in self.exp_config:
-                shutil.copy(exe_folder + f'{exp_type}.exe', simu_folder + f'{exp_type}.exe')
+                shutil.copy(os.path.join(exe_folder, f'{exp_type}.exe'),os.path.join(simu_folder, f'{exp_type}.exe'))
             # shutil.copytree(exe_folder, simu_folder)
         else:
             print('Source folder not exists')
@@ -283,7 +245,7 @@ class ExpTarget:
 
         # set cycliq parameters
         temp_line = ' '.join([str(temp_var) for temp_var in para])
-        with open(simu_folder+'modelPara.dat','w') as temp_file:
+        with open(os.path.join(simu_folder, 'modelPara.dat'),'w') as temp_file:
             temp_file.writelines(temp_line)
 
         for exp_type, exp_specs in self.exp_config.items():
@@ -404,7 +366,7 @@ class EvalCycliq:
                     ):
                         for p_in, e_in, csr in exp_specs:
                             temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
-                            if not os.path.exists(exp_folder + temp_filename):
+                            if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                                 print(f'vital error: experiment data lacks {temp_filename}')
                     case (
                         'undrained_cyclic_Tri' 
@@ -417,7 +379,7 @@ class EvalCycliq:
                     ):
                         for p_in, e_in, e_a in exp_specs:
                             temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
-                            if not os.path.exists(exp_folder + temp_filename):
+                            if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                                 print(f'vital error: experiment data lacks {temp_filename}')
     
                     case (
@@ -426,7 +388,7 @@ class EvalCycliq:
                     ):
                         for p_in, e_in, e_s in exp_specs:
                             temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
-                            if not os.path.exists(exp_folder + temp_filename):
+                            if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                                 print(f'vital error: experiment data lacks {temp_filename}')
     
                     case (
@@ -443,7 +405,7 @@ class EvalCycliq:
         temp_pid = os.getpid()
         temp_time0 = time.time()
         temp_name = f'temp_simu_{str(int(temp_time0))}_{str(temp_pid)}/'
-        temp_folder = self.eval_folder + temp_name
+        temp_folder = os.path.join(self.eval_folder, temp_name)
 
         if os.path.exists(temp_folder):
             os.makedirs(temp_folder)
@@ -461,7 +423,7 @@ class EvalCycliq:
                 ):
                     for p_in, e_in, csr in exp_specs:
                         temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
-                        scores.append(self.eval_config[exp_type](self.exp_folder + temp_filename, temp_folder + temp_filename))
+                        scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
                         
                 case (
                     'undrained_cyclic_Tri' 
@@ -474,7 +436,7 @@ class EvalCycliq:
                 ):
                     for p_in, e_in, e_a in exp_specs:
                         temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
-                        scores.append(self.eval_config[exp_type](self.exp_folder + temp_filename, temp_folder + temp_filename))
+                        scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
                 case (
                     'drained_mono_HCT' |
@@ -482,7 +444,7 @@ class EvalCycliq:
                 ):
                     for p_in, e_in, e_s in exp_specs:
                         temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
-                        scores.append(self.eval_config[exp_type](self.exp_folder + temp_filename, temp_folder + temp_filename))
+                        scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
                 case (
                     'undrained_cyclic_HCT_with_initial_shear'
