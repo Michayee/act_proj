@@ -184,8 +184,8 @@ def eval_undrained_cyc_torsion(test_file:str,simu_file:str,DA_lim = 0.075,nforn 
 
     test_sampled = eval_sampling(test_result, 'n', nforn=nforn)
     simu_sampled = eval_sampling(simu_result, 'n', nforn=nforn)
-    test_sampled['DA'] = calculate_DA(test_sampled['tau'].tolist())
-    simu_sampled['DA'] = calculate_DA(simu_sampled['tau'].tolist())
+    test_sampled['DA'] = calculate_DA(test_sampled['gamma'].tolist())
+    simu_sampled['DA'] = calculate_DA(simu_sampled['gamma'].tolist())
 
     test_trimmed = test_sampled[test_sampled['DA'] < DA_lim].copy()
     simu_trimmed = simu_sampled[simu_sampled['DA'] < DA_lim].copy()
@@ -196,7 +196,7 @@ def eval_undrained_cyc_torsion(test_file:str,simu_file:str,DA_lim = 0.075,nforn 
     n_test = test_trimmed['n'].max()
     n_simu = simu_trimmed['n'].max()
 
-    dis_ref = abs(max(n_simu,n_test)/min(n_simu,n_test) - 1)
+    dis_ref = abs(max(n_simu+1,n_test+1)/min(n_simu+1,n_test+1) - 1)
     if dis_ref  > 0.5:
         return dis_ref
     
