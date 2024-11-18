@@ -176,11 +176,11 @@ def eval_undrained_cyc_torsion(test_file:str,simu_file:str,DA_lim = 0.075,nforn 
         test_result = pd.read_csv(test_file)
         simu_result = pd.read_csv(simu_file)
     except FileNotFoundError:
-        return 999  # Return error code if files not found
+        return 99  # Return error code if files not found
     
     if simu_result.isna().any().any():
         print(f'Nan in {simu_file}')
-        return 999
+        return 99
 
     test_sampled = eval_sampling(test_result, 'n', nforn=nforn)
     simu_sampled = eval_sampling(simu_result, 'n', nforn=nforn)
