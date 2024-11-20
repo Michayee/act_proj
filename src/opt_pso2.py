@@ -7,7 +7,7 @@ from typing import Callable, List, Tuple
 def update_particle(x: np.ndarray, v: np.ndarray, 
                     p_best: np.ndarray, g_best: np.ndarray, 
                     bounds: List[Tuple[float, float]], 
-                    w=0.5, c1=1.0, c2=2.0) -> Tuple[np.ndarray, np.ndarray]:
+                    w=0.5, c1=1.0, c2=1.0) -> Tuple[np.ndarray, np.ndarray]:
     """
     更新粒子位置和速度。
     """
