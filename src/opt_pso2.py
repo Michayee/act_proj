@@ -37,15 +37,15 @@ def pso(num_particles: int, num_dimensions: int, num_iterations: int,
     print('Initializing PSO process')
     lack_score = result_df['score'].isna()
     temp_swarm = result_df.loc[lack_score, [f'x_{i}' for i in range(num_dimensions)]].to_numpy()
-    temp_scores = func_eval_batch(temp_swarm)
+    temp_scores = np.array(func_eval_batch(temp_swarm))
     result_df.loc[lack_score, 'score'] = temp_scores
     result_df.to_csv(results_file, float_format='%.5e', index=False)
 
     swarm = result_df.loc[:, [f'x_{i}' for i in range(num_dimensions)]].to_numpy()
-    scores = result_df.loc[:,'score'].tolist()
+    scores = result_df.loc[:,'score'].to_numpy()
 
     personal_best = np.copy(swarm)
-    personal_best_scores = scores.copy()
+    personal_best_scores = np.copy(scores)
     global_best = personal_best[np.argmin(personal_best_scores)]
     global_best_score = np.min(personal_best_scores)
 
@@ -58,7 +58,7 @@ def pso(num_particles: int, num_dimensions: int, num_iterations: int,
             swarm[i], velocity[i] = update_particle(swarm[i], velocity[i], personal_best[i], global_best, bounds)
         
         # 更新每代的结果并保存
-        scores = func_eval_batch(swarm)
+        scores = np.array(func_eval_batch(swarm))
         new_rows = pd.DataFrame(swarm, columns=[f'x_{i}' for i in range(num_dimensions)])
         new_rows['score'] = scores
         result_df = pd.concat([result_df, new_rows], ignore_index=True)
