@@ -29,8 +29,8 @@ def pso(num_particles: int, num_dimensions: int, num_iterations: int,
     if input_file and os.path.exists(input_file):
         new_rows = pd.read_csv(input_file)
         result_df.update(new_rows)
-        print(f'{new_rows['x_0'].count()} particles are provided with initial position')
-        print(f'{new_rows['score'].count()} of them are provided with initial score')
+        print(f'{new_rows["x_0"].count()} particles are provided with initial position')
+        print(f'{new_rows["score"].count()} of them are provided with initial score')
     else:
         print('No initial position provided, random initial position adopted')
 
@@ -50,7 +50,7 @@ def pso(num_particles: int, num_dimensions: int, num_iterations: int,
     global_best_score = np.min(personal_best_scores)
 
     pbar = tqdm(range(num_iterations), desc="PSO")
-    for iteration in pbar:
+    for _ in pbar:
         pbar.set_postfix({'Best Score': global_best_score})
 
         # 更新粒子位置和速度
