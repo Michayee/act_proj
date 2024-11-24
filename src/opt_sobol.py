@@ -9,7 +9,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dtype = torch.double
 
 def sobol(batch_size : int, num_dimensions : int, n_init : int,
-          results_file : str, func_eval_batch : Callable, seed = 0):
+          results_file : str, func_eval_batch : Callable, seed = 0) -> None:
+    
     sobol = SobolEngine(dimension = num_dimensions, scramble = False, seed = seed)
     num_iterations = int(n_init / batch_size) + 1
     result_df = pd.DataFrame()

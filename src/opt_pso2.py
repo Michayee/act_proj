@@ -19,6 +19,7 @@ def update_particle(x: np.ndarray, v: np.ndarray,
 
 def pso(num_particles: int, num_dimensions: int, num_iterations: int,
         input_file: str, results_file: str, func_eval_batch: Callable) -> None:
+    
     bounds = [(0, 1) for _ in range(num_dimensions)]
     swarm = np.random.uniform(0, 1, (num_particles, num_dimensions))
     velocity = np.random.uniform(-1, 1, (num_particles, num_dimensions))
