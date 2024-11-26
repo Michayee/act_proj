@@ -192,6 +192,11 @@ class ExpTarget:
                 [[p_in, e_in, csr], ...]
                 initial pressure, initial void ratio, cyclic stress ratio
 
+                or
+
+                [[p_in, e_in, csr, max_iter], ...]
+                initial pressure, initial void ratio, cyclic stress ratio, max iteration steps
+
             keys:
                 'drained_mono_Tri'
                 'undrained_mono_Tri'
@@ -257,13 +262,18 @@ class ExpTarget:
                     'undrained_cyclic_HCT_liqcyc' |
                     'undrained_cyclic_HCT_5cyc'
                 ):
-                    for p_in, e_in, csr in exp_specs:
+                    for temp_i in range(len(exp_specs)):
+                        if len(exp_specs[temp_i]) == 3:
+                            exp_specs[temp_i].append(80000) # max_iter is 80000 by default
+
+                    for p_in, e_in, csr, max_iter in exp_specs:
                         # write experiment specs
                         stress_initial = [- p_in if i in [0, 4, 8] else 0.0 for i in range(9)]
                         file_paths = {
                             'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
                             'initialVoidRatio.dat': str(e_in),
-                            'cyclicShearStress.dat': str(p_in * csr)
+                            'cyclicShearStress.dat': str(p_in * csr),
+                            'maxIter.dat': str(max_iter)
                         }
                         for file_name, content in file_paths.items():
                             with open(os.path.join(simu_folder, file_name), 'w') as file:
