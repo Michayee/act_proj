@@ -40,7 +40,7 @@ def cma_es(num_inds: int, num_dimensions: int, num_iterations: int,
 
     if input_file and os.path.exists(input_file):
         input_rows = pd.read_csv(input_file)
-        print(f'{new_rows["x_0"].count()} particles are provided with initial position')
+        print(f'{input_rows["x_0"].count()} particles are provided with initial position')
         input_rows = input_rows.loc[~input_rows["x_0"].isna()]
 
         initial_individuals = [creator.Individual(row[[f'x_{i}' for i in range(num_dimensions)]]) for index, row in input_rows.iterrows()]

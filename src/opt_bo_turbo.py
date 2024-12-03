@@ -38,6 +38,7 @@ class TurboState:
     batch_size: int
     length: float = 0.8
     length_min: float = 0.5**7
+    # length_min: float = 0.5**9
     length_max: float = 1.6
     failure_counter: int = 0
     failure_tolerance: int = float("nan")  # Note: Post-initialized
@@ -138,7 +139,7 @@ def bo_turbo(batch_size : int, num_dimensions : int, n_init : int,
              input_file: str, results_file: str, func_eval_batch : Callable, n_max_eval : int = 10000):
         
     max_cholesky_size = float("inf") # Always use Cholesky?
-    state = TurboState(num_dimensions, batch_size=batch_size, best_value=max(Y_turbo).item())
+    torch.manual_seed(0)
     
     NUM_RESTARTS = 10 if not SMOKE_TEST else 2
     RAW_SAMPLES = 512 if not SMOKE_TEST else 4
@@ -155,7 +156,7 @@ def bo_turbo(batch_size : int, num_dimensions : int, n_init : int,
         input_rows.loc[lack_score, 'score'] = temp_scores
 
         X_input = torch.tensor(
-            input_rows[[f'x_{i}' for i in range(9)]].to_numpy(), dtype=dtype, device=device
+            input_rows[[f'x_{i}' for i in range(num_dimensions)]].to_numpy(), dtype=dtype, device=device
             )
         Y_input = torch.tensor(
             input_rows['score'].to_numpy(), dtype=dtype, device=device
@@ -168,7 +169,7 @@ def bo_turbo(batch_size : int, num_dimensions : int, n_init : int,
         Y_turbo = torch.tensor(
             func_eval_batch(X_turbo.tolist()), dtype=dtype, device=device
         ).unsqueeze(-1)
-        if input_rows:
+        if input_file and os.path.exists(input_file):
             # Append data
             X_turbo = torch.cat((X_input, X_turbo), dim=0)
             Y_turbo = torch.cat((Y_input, Y_turbo), dim=0)
@@ -181,8 +182,7 @@ def bo_turbo(batch_size : int, num_dimensions : int, n_init : int,
     result_df.to_csv(results_file, float_format='%.5e', index=False)
     n_eval  = result_df.shape[0]
     
-    torch.manual_seed(0)
-    
+    state = TurboState(num_dimensions, batch_size=batch_size, best_value=max(Y_turbo).item()) # change
     while (n_eval < n_max_eval) and (not state.restart_triggered):  # Run until TuRBO converges
         # Fit a GP model
         train_Y = (Y_turbo - Y_turbo.mean()) / Y_turbo.std()
