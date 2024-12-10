@@ -5,6 +5,7 @@ test_eval/*
 
 # 忽略的目录
 simu temp/
+archieved/
 
 # 忽略的文件
 test*
