@@ -298,7 +298,10 @@ class ExpTarget:
                 ):
                     for p_in, e_in, e_a in exp_specs:
                         # write experiment specs
-                        stress_initial = [- p_in if i in [0, 4, 8] else 0.0 for i in range(9)]
+                        stress_initial = [0.0 for _ in range(9)]
+                        stress_initial[0] = -p_in + 0.1
+                        stress_initial[4] = -p_in + 0.1
+                        stress_initial[8] = -p_in - 0.2
                         file_paths = {
                             'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
                             'initialVoidRatio.dat': str(e_in),
