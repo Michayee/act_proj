@@ -246,7 +246,8 @@ class ExpTarget:
     def conduct_simu(self,
                      para,
                      simu_folder = 'simu temp/',
-                     t_lim = 120):
+                     t_lim = 120,
+                     if_clear_exe = True):
 
         # set cycliq parameters
         temp_line = ' '.join([str(temp_var) for temp_var in para])
@@ -346,7 +347,8 @@ class ExpTarget:
                 ):
                     pass
         
-        # clear_exe(simu_folder)
+        if if_clear_exe:
+            clear_exe(simu_folder)
 
 class EvalCycliq:
     def __init__(self, exp_config: ExpTarget, exp_folder: str, eval_folder: str,
@@ -476,6 +478,57 @@ class EvalCycliq:
         pool.join()
         return obj_batch
     
+    def eval_existed_folder(self, temp_folder):
+        scores = []
+        for exp_type, exp_specs in self.exp_config.exp_config.items():
+            match exp_type:
+                case (
+                    'drained_cyclic_HCT' |
+                    'drained_cyclic_HCT_5cyc' |
+                    'undrained_cyclic_HCT' |
+                    'undrained_cyclic_HCT_liqcyc' |
+                    'undrained_cyclic_HCT_5cyc'
+                ):
+                    for p_in, e_in, csr in exp_specs:
+                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                        scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
+                        
+                case (
+                    'undrained_cyclic_Tri' 
+                ):
+                    pass
+
+                case (
+                    'drained_mono_Tri' |
+                    'undrained_mono_Tri'
+                ):
+                    for p_in, e_in, e_a in exp_specs:
+                        temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
+
+                case (
+                    'drained_mono_HCT' |
+                    'undrained_mono_HCT'
+                ):
+                    for p_in, e_in, e_s in exp_specs:
+                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
+
+                case (
+                    'undrained_cyclic_HCT_with_initial_shear'
+                ):
+                    pass
+        final_score = np.sqrt(np.mean(np.square(scores)))
+        # return final_score, temp_folder
+        return final_score
+    
+    def eval_existed_folder_batch(self, folder_batch):
+        pool = multiprocessing.Pool(processes = self.N_PR)
+        obj_batch = pool.map(self.eval_existed_folder, folder_batch)
+        pool.close()
+        pool.join()
+        return obj_batch
+    
     def show_result(self, result_folder, png_name):
         pass
 
@@ -513,7 +566,10 @@ class ParaTrans:
         
         tempdict_para = self.para_temp.copy()
         for i, row in self.mappable_params.iterrows():
-            tempdict_para[row['var']] = row['min'] * np.exp(x[i] * (np.log(row['max']) - np.log(row['min'])))
+            if row['min'] > 0:
+                tempdict_para[row['var']] = row['min'] * np.exp(x[i] * (np.log(row['max']) - np.log(row['min'])))
+            else:
+                raise ValueError('non positive min value in input params')
         
         return [tempdict_para[key] for key in self.keys]
 
