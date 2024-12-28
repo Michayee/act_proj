@@ -48,6 +48,8 @@ def calculate_n(seq: np.ndarray, tau0: float = 0) -> np.ndarray:
 
     seq_n = np.zeros(len(seq))
 
+    start, end = 0, len(seq)
+
     # Process each segment
     for i in range(len(segments_indices) - 1):
         start, end = segments_indices[i], segments_indices[i + 1]
@@ -110,7 +112,7 @@ def pp_exe(simu_folder: str, datafile_name: str, cyclic: bool = True):
     sigma_z = - temp_stress[8]
     sigma_r = - temp_stress[4]
     sigma_t = - temp_stress[0]
-    temp_sign = np.sign(temp_stress.iloc[2,2])
+    temp_sign = np.sign(temp_stress.iloc[2,2]) # type: ignore
     sigma_zt = temp_sign * temp_stress[2]
     
     sigma_1 = (sigma_z + sigma_t) / 2 + np.sqrt(((sigma_z - sigma_t) / 2)**2 + sigma_zt**2)
@@ -127,7 +129,7 @@ def pp_exe(simu_folder: str, datafile_name: str, cyclic: bool = True):
     epsilon_z =  - temp_strain[8]
     epsilon_r =  - temp_strain[4]
     epsilon_t =  - temp_strain[0]
-    temp_sign = np.sign(temp_strain.iloc[2,2])
+    temp_sign = np.sign(temp_strain.iloc[2,2]) # type: ignore
     epsilon_zt = temp_sign * temp_strain[2]
     
     e1 = (epsilon_z + epsilon_t) / 2 + np.sqrt(((epsilon_z - epsilon_t) / 2)**2 + (epsilon_zt)**2)
@@ -174,7 +176,7 @@ def clear_exe(simu_folder: str):
 
 class ExpTarget:
     def __init__(self, 
-                 exp_config: Dict[str, List[Union[Tuple[float, float, float], Tuple[float, float, float, float]]]]):
+                 exp_config: Dict[str, List[List[float]]]):
         """
         Specify a series of experiment
         HCT: hollow cylinder torsion
@@ -352,7 +354,7 @@ class ExpTarget:
 
 class EvalCycliq:
     def __init__(self, exp_config: ExpTarget, exp_folder: str, eval_folder: str,
-                 eval_config: Dict[str, Callable[[str,str], float]], 
+                 eval_config: Dict[str, Callable], 
                  exe_folder: str = 'executables', N_PR: int = 12):
         self.exp_config = exp_config # 试验的配置
         self.exp_folder = exp_folder # 试验数据的位置
@@ -379,7 +381,11 @@ class EvalCycliq:
                         'undrained_cyclic_HCT_liqcyc' |
                         'undrained_cyclic_HCT_5cyc'
                     ):
-                        for p_in, e_in, csr in exp_specs:
+                        for temp_i in range(len(exp_specs)):
+                            if len(exp_specs[temp_i]) == 3:
+                                exp_specs[temp_i].append(80000) # max_iter is 80000 by default
+    
+                        for p_in, e_in, csr, max_iter in exp_specs:
                             temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                             if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                                 print(f'vital error: experiment data lacks {temp_filename}')
@@ -436,7 +442,11 @@ class EvalCycliq:
                     'undrained_cyclic_HCT_liqcyc' |
                     'undrained_cyclic_HCT_5cyc'
                 ):
-                    for p_in, e_in, csr in exp_specs:
+                    for temp_i in range(len(exp_specs)):
+                        if len(exp_specs[temp_i]) == 3:
+                            exp_specs[temp_i].append(80000) # max_iter is 80000 by default
+
+                    for p_in, e_in, csr, max_iter in exp_specs:
                         temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
                         
@@ -466,7 +476,7 @@ class EvalCycliq:
                 ):
                     pass
 
-        final_score = np.sqrt(np.mean(np.square(scores)))
+        final_score = np.sqrt(np.mean(np.square(scores))) / np.sqrt(len(scores))
         
         # return final_score, temp_folder
         return final_score
@@ -489,7 +499,11 @@ class EvalCycliq:
                     'undrained_cyclic_HCT_liqcyc' |
                     'undrained_cyclic_HCT_5cyc'
                 ):
-                    for p_in, e_in, csr in exp_specs:
+                    for temp_i in range(len(exp_specs)):
+                        if len(exp_specs[temp_i]) == 3:
+                            exp_specs[temp_i].append(80000) # max_iter is 80000 by default
+
+                    for p_in, e_in, csr, max_iter in exp_specs:
                         temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
                         
@@ -518,7 +532,7 @@ class EvalCycliq:
                     'undrained_cyclic_HCT_with_initial_shear'
                 ):
                     pass
-        final_score = np.sqrt(np.mean(np.square(scores)))
+        final_score = np.sqrt(np.mean(np.square(scores))) / np.sqrt(len(scores))
         # return final_score, temp_folder
         return final_score
     
