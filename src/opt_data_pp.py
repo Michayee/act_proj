@@ -3,6 +3,8 @@ import numpy as np
 from scipy.spatial import KDTree
 from typing import List, Dict, Tuple, Union, Callable
 
+# abandoned
+
 def read_model_parameters(file_path: str) -> np.array:
     """从给定文件路径读取浮点数并转换为 numpy 数组"""
     with open(file_path, 'r') as file:
