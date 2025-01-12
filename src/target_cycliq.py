@@ -286,7 +286,7 @@ class ExpTarget:
                         run_exe(simu_folder, f'{exp_type}.exe', t_lim)
     
                         # data process
-                        datafile_name = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                        datafile_name = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                         pp_exe(simu_folder, datafile_name, cyclic = True)
 
 
@@ -318,7 +318,7 @@ class ExpTarget:
                         run_exe(simu_folder, f'{exp_type}.exe', t_lim)
     
                         # data process
-                        datafile_name = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        datafile_name = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         pp_exe(simu_folder, datafile_name, cyclic = False)
 
                 case (
@@ -341,7 +341,7 @@ class ExpTarget:
                         run_exe(simu_folder, f'{exp_type}.exe', t_lim)
     
                         # data process
-                        datafile_name = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        datafile_name = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         pp_exe(simu_folder, datafile_name, cyclic = False)
 
                 case (
@@ -386,7 +386,7 @@ class EvalCycliq:
                                 exp_specs[temp_i].append(80000) # max_iter is 80000 by default
     
                         for p_in, e_in, csr, max_iter in exp_specs:
-                            temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                            temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                             if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                                 print(f'vital error: experiment data lacks {temp_filename}')
                     case (
@@ -399,7 +399,7 @@ class EvalCycliq:
                         'undrained_mono_Tri'
                     ):
                         for p_in, e_in, e_a in exp_specs:
-                            temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                            temp_filename = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                             if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                                 print(f'vital error: experiment data lacks {temp_filename}')
     
@@ -408,7 +408,7 @@ class EvalCycliq:
                         'undrained_mono_HCT'
                     ):
                         for p_in, e_in, e_s in exp_specs:
-                            temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                            temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                             if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                                 print(f'vital error: experiment data lacks {temp_filename}')
     
@@ -428,8 +428,8 @@ class EvalCycliq:
         temp_name = f'temp_simu_{str(int(temp_time0))}_{str(temp_pid)}/'
         temp_folder = os.path.join(self.eval_folder, temp_name)
 
-        if os.path.exists(temp_folder):
-            os.makedirs(temp_folder)
+        while os.path.exists(temp_folder):
+            temp_folder = temp_folder + '_2'
         
         self.exp_config.ini_simu(exe_folder = self.exe_folder, simu_folder = temp_folder)
         self.exp_config.conduct_simu(para, simu_folder = temp_folder)
@@ -447,7 +447,7 @@ class EvalCycliq:
                             exp_specs[temp_i].append(80000) # max_iter is 80000 by default
 
                     for p_in, e_in, csr, max_iter in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
                         
                 case (
@@ -460,7 +460,7 @@ class EvalCycliq:
                     'undrained_mono_Tri'
                 ):
                     for p_in, e_in, e_a in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
                 case (
@@ -468,7 +468,7 @@ class EvalCycliq:
                     'undrained_mono_HCT'
                 ):
                     for p_in, e_in, e_s in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
                 case (
@@ -476,7 +476,7 @@ class EvalCycliq:
                 ):
                     pass
 
-        final_score = np.sqrt(np.mean(np.square(scores))) / np.sqrt(len(scores))
+        final_score = np.sqrt(np.mean(np.square(scores)))
         
         # return final_score, temp_folder
         return final_score
@@ -504,7 +504,7 @@ class EvalCycliq:
                             exp_specs[temp_i].append(80000) # max_iter is 80000 by default
 
                     for p_in, e_in, csr, max_iter in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
                         
                 case (
@@ -517,7 +517,7 @@ class EvalCycliq:
                     'undrained_mono_Tri'
                 ):
                     for p_in, e_in, e_a in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
                 case (
@@ -525,14 +525,14 @@ class EvalCycliq:
                     'undrained_mono_HCT'
                 ):
                     for p_in, e_in, e_s in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
                 case (
                     'undrained_cyclic_HCT_with_initial_shear'
                 ):
                     pass
-        final_score = np.sqrt(np.mean(np.square(scores))) / np.sqrt(len(scores))
+        final_score = np.sqrt(np.mean(np.square(scores)))
         # return final_score, temp_folder
         return final_score
     
