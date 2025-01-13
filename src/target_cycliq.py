@@ -252,7 +252,7 @@ class ExpTarget:
                      if_clear_exe = True):
 
         # set cycliq parameters
-        temp_line = ' '.join([str(temp_var) for temp_var in para])
+        temp_line = ' '.join([f'{temp_var:.8e}' for temp_var in para])
         with open(os.path.join(simu_folder, 'modelPara.dat'),'w') as temp_file:
             temp_file.writelines(temp_line)
 
@@ -274,9 +274,9 @@ class ExpTarget:
                         stress_initial = [- p_in if i in [0, 4, 8] else 0.0 for i in range(9)]
                         file_paths = {
                             'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
-                            'initialVoidRatio.dat': str(e_in),
-                            'cyclicShearStress.dat': str(p_in * csr),
-                            'maxIter.dat': str(max_iter)
+                            'initialVoidRatio.dat': f'{e_in:.5f}',
+                            'cyclicShearStress.dat':  f'{p_in * csr:.3f}',
+                            'maxIter.dat': f'{max_iter:d}'
                         }
                         for file_name, content in file_paths.items():
                             with open(os.path.join(simu_folder, file_name), 'w') as file:
@@ -307,8 +307,8 @@ class ExpTarget:
                         stress_initial[8] = -p_in - 0.2
                         file_paths = {
                             'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
-                            'initialVoidRatio.dat': str(e_in),
-                            'axialStrain.dat': str(e_a)
+                            'initialVoidRatio.dat': f'{e_in:.5f}',
+                            'axialStrain.dat':  f'{e_a:.5f}',
                         }
                         for file_name, content in file_paths.items():
                             with open(os.path.join(simu_folder, file_name), 'w') as file:
@@ -330,8 +330,8 @@ class ExpTarget:
                         stress_initial = [- p_in if i in [0, 4, 8] else 0.0 for i in range(9)]
                         file_paths = {
                             'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
-                            'initialVoidRatio.dat': str(e_in),
-                            'shearStrain.dat': str(e_s)
+                            'initialVoidRatio.dat': f'{e_in:.5f}',
+                            'shearStrain.dat': f'{e_s:.5f}'
                         }
                         for file_name, content in file_paths.items():
                             with open(os.path.join(simu_folder, file_name), 'w') as file:

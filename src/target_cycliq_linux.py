@@ -252,7 +252,7 @@ class ExpTarget:
                      if_clear_exe = True):
 
         # set cycliq parameters
-        temp_line = ' '.join([str(temp_var) for temp_var in para])
+        temp_line = ' '.join([f'{temp_var:.8e}' for temp_var in para])
         with open(os.path.join(simu_folder, 'modelPara.dat'),'w') as temp_file:
             temp_file.writelines(temp_line)
 
@@ -272,9 +272,9 @@ class ExpTarget:
                     stress_initial = [- p_in if i in [0, 4, 8] else 0.0 for i in range(9)]
                     file_paths = {
                         'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
-                        'initialVoidRatio.dat': str(e_in),
-                        'cyclicShearStress.dat': str(p_in * csr),
-                        'maxIter.dat': str(max_iter)
+                        'initialVoidRatio.dat': f'{e_in:.5f}',
+                        'cyclicShearStress.dat':  f'{p_in * csr:.3f}',
+                        'maxIter.dat': f'{max_iter:d}'
                     }
                     for file_name, content in file_paths.items():
                         with open(os.path.join(simu_folder, file_name), 'w') as file:
@@ -284,7 +284,7 @@ class ExpTarget:
                     run_exe(simu_folder, f'{exp_type}', t_lim)
 
                     # data process
-                    datafile_name = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                    datafile_name = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                     pp_exe(simu_folder, datafile_name, cyclic = True)
 
             elif exp_type in ['undrained_cyclic_Tri',
@@ -302,8 +302,8 @@ class ExpTarget:
                     stress_initial[8] = -p_in - 0.2
                     file_paths = {
                         'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
-                        'initialVoidRatio.dat': str(e_in),
-                        'axialStrain.dat': str(e_a)
+                        'initialVoidRatio.dat': f'{e_in:.5f}',
+                        'shearStrain.dat': f'{e_a:.5f}'
                     }
                     for file_name, content in file_paths.items():
                         with open(os.path.join(simu_folder, file_name), 'w') as file:
@@ -313,7 +313,7 @@ class ExpTarget:
                     run_exe(simu_folder, f'{exp_type}', t_lim)
 
                     # data process
-                    datafile_name = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                    datafile_name = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                     pp_exe(simu_folder, datafile_name, cyclic = False)
 
             elif exp_type in ['drained_mono_HCT',
@@ -324,8 +324,8 @@ class ExpTarget:
                     stress_initial = [- p_in if i in [0, 4, 8] else 0.0 for i in range(9)]
                     file_paths = {
                         'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
-                        'initialVoidRatio.dat': str(e_in),
-                        'shearStrain.dat': str(e_s)
+                        'initialVoidRatio.dat': f'{e_in:.5f}',
+                        'shearStrain.dat': f'{e_s:.5f}'
                     }
                     for file_name, content in file_paths.items():
                         with open(os.path.join(simu_folder, file_name), 'w') as file:
@@ -335,7 +335,7 @@ class ExpTarget:
                     run_exe(simu_folder, f'{exp_type}', t_lim)
 
                     # data process
-                    datafile_name = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                    datafile_name = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                     pp_exe(simu_folder, datafile_name, cyclic = False)
 
             elif exp_type in ['undrained_cyclic_HCT_with_initial_shear',
@@ -377,7 +377,7 @@ class EvalCycliq:
                             exp_specs[temp_i].append(80000) # max_iter is 80000 by default
 
                     for p_in, e_in, csr, max_iter in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                         if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                             print(f'vital error: experiment data lacks {temp_filename}')
 
@@ -389,7 +389,7 @@ class EvalCycliq:
                                   'undrained_mono_Tri',
                                   ]:
                     for p_in, e_in, e_a in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                             print(f'vital error: experiment data lacks {temp_filename}')
     
@@ -397,7 +397,7 @@ class EvalCycliq:
                                   'undrained_mono_HCT',
                                   ]:
                     for p_in, e_in, e_s in exp_specs:
-                        temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                        temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                         if not os.path.exists(os.path.join(exp_folder, temp_filename)):
                             print(f'vital error: experiment data lacks {temp_filename}')
     
@@ -433,7 +433,7 @@ class EvalCycliq:
                         exp_specs[temp_i].append(80000) # max_iter is 80000 by default
 
                 for p_in, e_in, csr, max_iter in exp_specs:
-                    temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                    temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                     scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
                         
             elif exp_type in ['undrained_cyclic_Tri',
@@ -444,14 +444,14 @@ class EvalCycliq:
                               'undrained_mono_Tri',
                               ]:
                 for p_in, e_in, e_a in exp_specs:
-                    temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                    temp_filename = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                     scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
             elif exp_type in ['drained_mono_HCT',
                               'undrained_mono_HCT',
                               ]:
                 for p_in, e_in, e_s in exp_specs:
-                    temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                    temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                     scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
             elif exp_type in ['undrained_cyclic_HCT_with_initial_shear',
@@ -484,7 +484,7 @@ class EvalCycliq:
                         exp_specs[temp_i].append(80000) # max_iter is 80000 by default
 
                 for p_in, e_in, csr, max_iter in exp_specs:
-                    temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
+                    temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_csr_{csr:.3f}'.replace('.', '_')+'.txt'
                     scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
                         
             elif exp_type in ['undrained_cyclic_Tri',
@@ -495,14 +495,14 @@ class EvalCycliq:
                               'undrained_mono_Tri',
                               ]:
                 for p_in, e_in, e_a in exp_specs:
-                    temp_filename = f'{exp_type.split('_')[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                    temp_filename = f'{exp_type.split("_")[0]}_Tri_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                     scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
             elif exp_type in ['drained_mono_HCT',
                               'undrained_mono_HCT',
                               ]:
                 for p_in, e_in, e_s in exp_specs:
-                    temp_filename = f'{exp_type.split('_')[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
+                    temp_filename = f'{exp_type.split("_")[0]}_HCT_p_{p_in:.0f}_ein_{e_in:.3f}_mono'.replace('.', '_')+'.txt'
                     scores.append(self.eval_config[exp_type](os.path.join(self.exp_folder, temp_filename), os.path.join(temp_folder, temp_filename)))
 
             elif exp_type in ['undrained_cyclic_HCT_with_initial_shear',
