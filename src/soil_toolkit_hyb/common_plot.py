@@ -37,6 +37,11 @@ config = {
 rcParams.update(config)
 # --------------- font related end ---------------
 
+if os.name =='nt':
+    split_note = '\\'
+else:
+    split_note = '/'
+
 import re
 def extract_ein(s: str):
     """
@@ -173,7 +178,7 @@ def plot_undrained_cyclic_HCT(file_test, file_simu, png_name = None):
     plot_by_list(data_test,[[ax1,'gamma', 'n'],[ax2, 'p', 'n'],[ax3, 'tau','gamma']], color = '#920A2F')
     plot_by_list(data_simu,[[ax4,'gamma', 'n'],[ax5, 'p', 'n'],[ax6, 'tau','gamma']], color = '#00449C')
     
-    fig.text(0.5, 0.98, file_test.split('\\')[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
+    fig.text(0.5, 0.98, file_test.split(split_note)[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
     if png_name is not None:
         fig.savefig(png_name, dpi = 300)
 
@@ -216,7 +221,7 @@ def plot_drained_cyclic_HCT(file_test, file_simu, png_name = None):
     plot_by_list(data_test,[[ax3,'tau','gamma']], color = '#920A2F')
     plot_by_list(data_simu,[[ax3,'tau','gamma']], color = '#00449C')
 
-    fig.text(0.5, 0.93, file_test.split('\\')[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
+    fig.text(0.5, 0.93, file_test.split(split_note)[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
     if png_name is not None:
         fig.savefig(png_name, dpi = 300)
 
@@ -250,7 +255,7 @@ def plot_drained_mono_Tri(file_test, file_simu, png_name = None):
     plot_by_list(data_test,[[ax1,'q','e_a'], [ax2,'e_v','e_a'], [ax3,'e','p']], color = '#920A2F')
     plot_by_list(data_simu,[[ax1,'q','e_a'], [ax2,'e_v','e_a'], [ax3,'e','p']], color = '#00449C')
     
-    fig.text(0.5, 0.93, file_test.split('\\')[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
+    fig.text(0.5, 0.93, file_test.split(split_note)[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
     if png_name is not None:
         fig.savefig(png_name, dpi = 300)
 
@@ -284,7 +289,7 @@ def plot_undrained_mono_Tri(file_test, file_simu, png_name = None):
     plot_by_list(data_test,[[ax1,'q','e_a'], [ax2,'p','e_a'], [ax3,'q','p']], color = '#920A2F')
     plot_by_list(data_simu,[[ax1,'q','e_a'], [ax2,'p','e_a'], [ax3,'q','p']], color = '#00449C')
     
-    fig.text(0.5, 0.93, file_test.split('\\')[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
+    fig.text(0.5, 0.93, file_test.split(split_note)[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
     if png_name is not None:
         fig.savefig(png_name, dpi = 300)
 
@@ -318,7 +323,7 @@ def plot_drained_mono_HCT(file_test, file_simu, png_name = None):
     plot_by_list(data_test,[[ax1,'tau','gamma'], [ax2,'e_v','gamma']], color = '#920A2F')
     plot_by_list(data_simu,[[ax1,'tau','gamma'], [ax2,'e_v','gamma']], color = '#00449C')
   
-    fig.text(0.5, 0.93, file_test.split('\\')[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
+    fig.text(0.5, 0.93, file_test.split(split_note)[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
     if png_name is not None:
         fig.savefig(png_name, dpi = 300)
 
@@ -352,7 +357,7 @@ def plot_undrained_mono_HCT(file_test, file_simu, png_name = None):
     plot_by_list(data_test,[[ax1,'tau','gamma'], [ax2,'p','gamma']], color = '#920A2F')
     plot_by_list(data_simu,[[ax1,'tau','gamma'], [ax2,'p','gamma']], color = '#00449C')
     
-    fig.text(0.5, 0.93, file_test.split('\\')[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
+    fig.text(0.5, 0.93, file_test.split(split_note)[-1].replace('.txt',''), fontsize=9, va='top', ha='center')
     if png_name is not None:
         fig.savefig(png_name, dpi = 300)
 
