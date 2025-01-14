@@ -1,13 +1,24 @@
 from typing import Callable, List, Tuple
-import multiprocessing
+# import multiprocessing
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import os
 from deap import base, cma, creator, tools
+import shutil
+
+def clear_temp(temp_folder):
+    temp_folder_spec = 'temp_simu_'
+    for entry in os.listdir(temp_folder):
+        full_path = os.path.join(temp_folder, entry)
+        if os.path.isdir(full_path) and temp_folder_spec in entry:
+            try:
+                shutil.rmtree(full_path)
+            finally:
+                pass
 
 def cma_es(num_inds: int, num_dimensions: int, num_iterations: int,
-           input_file: str, results_file: str, func_eval_batch: Callable) -> None:
+           input_file: str, results_file: str, func_eval_batch: Callable, temp_folder: str = None) -> None:
     
     bounds = [(0, 1) for _ in range(num_dimensions)]
     creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
@@ -59,7 +70,7 @@ def cma_es(num_inds: int, num_dimensions: int, num_iterations: int,
         ind.fitness.values = fit, # , is necessary, seemingly related to weights=(-1.0,)
     result_df = pd.DataFrame(population, columns=[f'x_{i}' for i in range(num_dimensions)])
     result_df.insert(0, 'score', fitnesses)
-    result_df.to_csv(results_file, float_format='%.5e', index=False)
+    result_df.to_csv(results_file, float_format='%.8e', index=False)
 
     toolbox.update(population)
 
@@ -81,7 +92,10 @@ def cma_es(num_inds: int, num_dimensions: int, num_iterations: int,
         new_rows = pd.DataFrame(population, columns=[f'x_{i}' for i in range(num_dimensions)])
         new_rows['score'] = fitnesses
         result_df = pd.concat([result_df, new_rows], ignore_index=True)
-        result_df.to_csv(results_file, float_format='%.5e', index=False)
+        result_df.to_csv(results_file, float_format='%.8e', index=False)
+
+        if temp_folder is not None:
+            clear_temp(temp_folder)
 
         toolbox.update(population)
 

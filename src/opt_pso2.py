@@ -3,6 +3,17 @@ import pandas as pd
 from tqdm import tqdm
 import os
 from typing import Callable, List, Tuple
+import shutil
+
+def clear_temp(temp_folder):
+    temp_folder_spec = 'temp_simu_'
+    for entry in os.listdir(temp_folder):
+        full_path = os.path.join(temp_folder, entry)
+        if os.path.isdir(full_path) and temp_folder_spec in entry:
+            try:
+                shutil.rmtree(full_path)
+            finally:
+                pass
 
 def update_particle(x: np.ndarray, v: np.ndarray, 
                     p_best: np.ndarray, g_best: np.ndarray, 
@@ -18,7 +29,7 @@ def update_particle(x: np.ndarray, v: np.ndarray,
     return new_x, new_v
 
 def pso(num_particles: int, num_dimensions: int, num_iterations: int,
-        input_file: str, results_file: str, func_eval_batch: Callable) -> None:
+        input_file: str, results_file: str, func_eval_batch: Callable, temp_folder: str = None) -> None:
     
     bounds = [(0, 1) for _ in range(num_dimensions)]
     swarm = np.random.uniform(0, 1, (num_particles, num_dimensions))
@@ -40,7 +51,7 @@ def pso(num_particles: int, num_dimensions: int, num_iterations: int,
     temp_swarm = result_df.loc[lack_score, [f'x_{i}' for i in range(num_dimensions)]].to_numpy()
     temp_scores = np.array(func_eval_batch(temp_swarm))
     result_df.loc[lack_score, 'score'] = temp_scores
-    result_df.to_csv(results_file, float_format='%.5e', index=False)
+    result_df.to_csv(results_file, float_format='%.8e', index=False)
 
     swarm = result_df.loc[:, [f'x_{i}' for i in range(num_dimensions)]].to_numpy()
     scores = result_df.loc[:,'score'].to_numpy()
@@ -63,7 +74,7 @@ def pso(num_particles: int, num_dimensions: int, num_iterations: int,
         new_rows = pd.DataFrame(swarm, columns=[f'x_{i}' for i in range(num_dimensions)])
         new_rows['score'] = scores
         result_df = pd.concat([result_df, new_rows], ignore_index=True)
-        result_df.to_csv(results_file, float_format='%.5e', index=False)
+        result_df.to_csv(results_file, float_format='%.8e', index=False)
 
         # 更新个人和全局最优
         improved = scores < personal_best_scores
@@ -74,3 +85,6 @@ def pso(num_particles: int, num_dimensions: int, num_iterations: int,
         if np.min(scores) < global_best_score:
             global_best_score = np.min(scores)
             global_best = swarm[np.argmin(scores)]
+
+        if temp_folder is not None:
+            clear_temp(temp_folder)
