@@ -108,7 +108,7 @@ def eval_sampling(df_input: pd.DataFrame, index: str = 'n', nforn: int = 24) -> 
     n_diff_rounded = np.floor(n_diff).astype(int)
     
     # Get unique indices to sample - the first occurrence of each rounded index
-    sampl_indices = n_diff_rounded.drop_duplicates(keep = 'first').index
+    sampl_indices = n_diff_rounded.drop_duplicates(keep = 'first').index # type: ignore
     
     # Return the sampled DataFrame
     df_output = df_input.loc[sampl_indices].copy()
@@ -213,6 +213,61 @@ def eval_undrained_cyc_torsion(test_file:str,simu_file:str,DA_lim = 0.075,nforn 
     set_B = simu_trimmed[['n_1','gamma_1','p_1']].to_numpy()
     return hausdorff_distance_KD(set_A, set_B)
 
+def eval_undrained_cyc_torsion9(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 24):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+    
+    test_result['DA'] = calculate_DA(test_result['gamma'].tolist())
+    simu_result['DA'] = calculate_DA(simu_result['gamma'].tolist())
+
+    test_trimmed = test_result[test_result['DA'] < DA_lim].copy()
+    simu_trimmed = simu_result[simu_result['DA'] < DA_lim].copy()
+
+    test_trimmed = eval_sampling(test_trimmed, 'n', nforn=nforn)
+    simu_trimmed = eval_sampling(simu_trimmed, 'n', nforn=nforn)
+
+    gamma_max = DA_lim * 0.5
+    p_test = test_trimmed['p'].max()
+    p_simu = simu_trimmed['p'].max()
+    n_test = test_trimmed['n'].max()
+    # n_simu = simu_trimmed['n'].max()
+    tau_test = test_trimmed['tau'].max()
+    tau_simu = simu_trimmed['tau'].max()
+
+    test_trimmed['gamma_1'] = test_trimmed['gamma'] / gamma_max
+    test_trimmed['p_1'] = test_trimmed['p'] / p_test
+    simu_trimmed['gamma_1'] = simu_trimmed['gamma'] / gamma_max
+    simu_trimmed['p_1'] = simu_trimmed['p'] / p_simu
+    test_trimmed['n_1'] = test_trimmed['n'] / n_test
+    simu_trimmed['n_1'] = simu_trimmed['n'] / n_test
+    test_trimmed['tau_1'] = test_trimmed['tau'] / tau_test
+    simu_trimmed['tau_1'] = simu_trimmed['tau'] / tau_simu
+         
+    set_A = test_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    set_B = simu_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    return hausdorff_distance_KD(set_A, set_B) + abs(simu_trimmed['p_1'].min() - test_trimmed['p_1'].min()) * 5
+
+
 def eval_undrained_mono_torsion(test_file:str,simu_file:str,nforn = 200):
     """
     Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
@@ -258,3 +313,437 @@ def eval_undrained_mono_torsion(test_file:str,simu_file:str,nforn = 200):
     set_A = test_sampled[['gamma_1','p_1','q_1']].to_numpy()
     set_B = simu_sampled[['gamma_1','p_1','q_1']].to_numpy()
     return frechet_distance(set_A, set_B)
+
+
+# --------------------------- abandoned ----------------------------------
+
+def eval_undrained_cyc_torsion2(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 24):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+
+    test_sampled = eval_sampling(test_result, 'n', nforn=nforn)
+    simu_sampled = eval_sampling(simu_result, 'n', nforn=nforn)
+    test_sampled['DA'] = calculate_DA(test_sampled['gamma'].tolist())
+    simu_sampled['DA'] = calculate_DA(simu_sampled['gamma'].tolist())
+
+    test_trimmed = test_sampled[test_sampled['DA'] < DA_lim].copy()
+    simu_trimmed = simu_sampled[simu_sampled['DA'] < DA_lim].copy()
+        
+    gamma_max = DA_lim * 0.5
+    p_test = test_trimmed['p'].max()
+    p_simu = simu_trimmed['p'].max()
+    n_test = test_trimmed['n'].max()
+    n_simu = simu_trimmed['n'].max()
+    tau_test = test_trimmed['tau'].max()
+    tau_simu = simu_trimmed['tau'].max()
+
+    dis_ref = abs(max(n_simu+1,n_test+1)/min(n_simu+1,n_test+1) - 1)
+    if dis_ref  > 0.5:
+        return dis_ref
+    
+    else:
+        test_trimmed['gamma_1'] = test_trimmed['gamma'] / gamma_max
+        test_trimmed['p_1'] = test_trimmed['p'] / p_test
+        simu_trimmed['gamma_1'] = simu_trimmed['gamma'] / gamma_max
+        simu_trimmed['p_1'] = simu_trimmed['p'] / p_simu
+
+        test_trimmed['n_1'] = test_trimmed['n'] / n_test
+        simu_trimmed['n_1'] = simu_trimmed['n'] / n_test
+
+        test_trimmed['tau_1'] = test_trimmed['tau'] / tau_test
+        simu_trimmed['tau_1'] = simu_trimmed['tau'] / tau_simu
+         
+    set_A = test_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    set_B = simu_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    return hausdorff_distance_KD(set_A, set_B)
+    # return frechet_distance(set_A, set_B)
+
+def eval_undrained_cyc_torsion3(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 24):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+
+    test_sampled = eval_sampling(test_result, 'n', nforn=nforn)
+    simu_sampled = eval_sampling(simu_result, 'n', nforn=nforn)
+    test_sampled['DA'] = calculate_DA(test_sampled['gamma'].tolist())
+    simu_sampled['DA'] = calculate_DA(simu_sampled['gamma'].tolist())
+
+    test_trimmed = test_sampled[test_sampled['DA'] < DA_lim].copy()
+    simu_trimmed = simu_sampled[simu_sampled['DA'] < DA_lim].copy()
+        
+    gamma_max = DA_lim
+    p_test = test_trimmed['p'].max()
+    p_simu = simu_trimmed['p'].max()
+    n_test = test_trimmed['n'].max()
+    n_simu = simu_trimmed['n'].max()
+    tau_test = test_trimmed['tau'].max()
+    tau_simu = simu_trimmed['tau'].max()
+
+    dis_ref = abs(max(n_simu+1,n_test+1)/min(n_simu+1,n_test+1) - 1)
+    if dis_ref  > 0.5:
+        return dis_ref
+    
+    else:
+        test_trimmed['gamma_1'] = test_trimmed['gamma'] / gamma_max
+        test_trimmed['p_1'] = (test_trimmed['p'] / p_test)**0.5
+        simu_trimmed['gamma_1'] = simu_trimmed['gamma'] / gamma_max
+        simu_trimmed['p_1'] = (simu_trimmed['p'] / p_simu)**0.5
+
+        test_trimmed['n_1'] = test_trimmed['n'] / n_test
+        simu_trimmed['n_1'] = simu_trimmed['n'] / n_test
+
+        test_trimmed['tau_1'] = test_trimmed['tau'] / tau_test
+        simu_trimmed['tau_1'] = simu_trimmed['tau'] / tau_simu
+         
+    set_A = test_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    set_B = simu_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    return hausdorff_distance_KD(set_A, set_B)
+
+def eval_undrained_cyc_torsion4(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 48):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+    
+    test_result['DA'] = calculate_DA(test_result['gamma'].tolist())
+    simu_result['DA'] = calculate_DA(simu_result['gamma'].tolist())
+
+    test_trimmed = test_result[test_result['DA'] < DA_lim].copy()
+    simu_trimmed = simu_result[simu_result['DA'] < DA_lim].copy()
+
+    test_trimmed = eval_sampling(test_trimmed, 'n', nforn=nforn)
+    simu_trimmed = eval_sampling(simu_trimmed, 'n', nforn=nforn)
+
+    gamma_max = DA_lim * 0.5
+    p_test = test_trimmed['p'].max()
+    p_simu = simu_trimmed['p'].max()
+    n_test = test_trimmed['n'].max()
+    n_simu = simu_trimmed['n'].max()
+    tau_test = test_trimmed['tau'].max()
+    tau_simu = simu_trimmed['tau'].max()
+
+    dis_ref = abs(max(n_simu+1,n_test+1)/min(n_simu+1,n_test+1) - 1)
+    if dis_ref  > 0.5:
+        return dis_ref
+    
+    else:
+        test_trimmed['gamma_1'] = test_trimmed['gamma'] / gamma_max
+        test_trimmed['p_1'] = test_trimmed['p'] / p_test
+        simu_trimmed['gamma_1'] = simu_trimmed['gamma'] / gamma_max
+        simu_trimmed['p_1'] = simu_trimmed['p'] / p_simu
+
+        test_trimmed['n_1'] = test_trimmed['n'] / n_test
+        simu_trimmed['n_1'] = simu_trimmed['n'] / n_test
+
+        test_trimmed['tau_1'] = test_trimmed['tau'] / tau_test
+        simu_trimmed['tau_1'] = simu_trimmed['tau'] / tau_simu
+         
+    set_A = test_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    set_B = simu_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    return hausdorff_distance_KD(set_A, set_B)
+
+def eval_undrained_cyc_torsion5(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 48):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+    
+    test_result['DA'] = calculate_DA(test_result['gamma'].tolist())
+    simu_result['DA'] = calculate_DA(simu_result['gamma'].tolist())
+
+    ru_thershold = [ 0.5, 0.8, 0.95 ]
+    da_thershold = [ 7.5 ]
+
+    p_test = test_result['p'].max()
+    p_simu = simu_result['p'].max()
+
+    score = []
+
+    for thershold in [ 1-ru for ru in ru_thershold ]:
+        test_index = test_result[test_result['p'] < thershold * p_test].index.min()
+        test_n = test_result.loc[test_index, 'n'] if pd.notna(test_index) else np.nan
+
+        simu_index = simu_result[simu_result['p'] < thershold * p_simu].index.min()
+        simu_n = simu_result.loc[simu_index, 'n'] if pd.notna(simu_index) else np.nan
+
+        if not np.isnan(test_n): # type: ignore
+            if not np.isnan(simu_n): # type: ignore
+                # temp_score = 1.0 - min(test_n,simu_n) / max(test_n,simu_n) # type: ignore
+                temp_score = 1.0 - min(test_n,simu_n) / max(test_n,simu_n) # type: ignore
+                score.append(temp_score)
+            else:
+                score.append(5.0)
+
+    for thershold in da_thershold:
+        test_index = test_result[test_result['DA'] > thershold * 0.01].index.min()
+        test_n = test_result.loc[test_index, 'n'] if pd.notna(test_index) else np.nan
+
+        simu_index = simu_result[simu_result['DA'] > thershold * 0.01].index.min()
+        simu_n = simu_result.loc[simu_index, 'n'] if pd.notna(simu_index) else np.nan
+
+        if not np.isnan(test_n): # type: ignore
+            if not np.isnan(simu_n): # type: ignore
+                test_index = test_result[test_result['DA'] > 1.5 * 0.01].index.min()
+                test_n = test_n - test_result.loc[test_index, 'n'] # type: ignore
+                simu_index = simu_result[simu_result['DA'] > 1.5 * 0.01].index.min()
+                simu_n = simu_n - simu_result.loc[simu_index, 'n'] # type: ignore
+                temp_score = 1.0 - min(test_n,simu_n) / max(test_n,simu_n) # type: ignore
+                score.append(temp_score)
+            else:
+                score.append(5.0)
+    # if len(score) == 0:
+    #     final_score = 99
+    final_score = np.sqrt(np.mean(np.square(score))) / np.sqrt(len(score))
+    return final_score
+
+def eval_undrained_cyc_torsion6(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 24):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+    
+    test_result['DA'] = calculate_DA(test_result['gamma'].tolist())
+    simu_result['DA'] = calculate_DA(simu_result['gamma'].tolist())
+
+    test_trimmed = test_result[test_result['DA'] < DA_lim].copy()
+    simu_trimmed = simu_result[simu_result['DA'] < DA_lim].copy()
+
+    test_trimmed = eval_sampling(test_trimmed, 'n', nforn=nforn)
+    simu_trimmed = eval_sampling(simu_trimmed, 'n', nforn=nforn)
+
+    gamma_max = DA_lim * 0.5
+    p_test = test_trimmed['p'].max()
+    p_simu = simu_trimmed['p'].max()
+    n_test = test_trimmed['n'].max()
+    n_simu = simu_trimmed['n'].max()
+    tau_test = test_trimmed['tau'].max()
+    tau_simu = simu_trimmed['tau'].max()
+
+    dis_ref = abs(max(n_simu+1,n_test+1)/min(n_simu+1,n_test+1) - 1)
+    if dis_ref  > 0.5:
+        return dis_ref
+    
+    else:
+        test_trimmed['gamma_1'] = test_trimmed['gamma'] / gamma_max
+        test_trimmed['p_1'] = test_trimmed['p'] / p_test
+        simu_trimmed['gamma_1'] = simu_trimmed['gamma'] / gamma_max
+        simu_trimmed['p_1'] = simu_trimmed['p'] / p_simu
+
+        test_trimmed['n_1'] = test_trimmed['n'] / n_test
+        simu_trimmed['n_1'] = simu_trimmed['n'] / n_test
+
+        test_trimmed['tau_1'] = test_trimmed['tau'] / tau_test
+        simu_trimmed['tau_1'] = simu_trimmed['tau'] / tau_simu
+         
+    set_A = test_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    set_B = simu_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    return hausdorff_distance_KD(set_A, set_B) + test_trimmed['p_1'].min() * 20.0
+
+def eval_undrained_cyc_torsion7(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 24):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+    
+    test_result['DA'] = calculate_DA(test_result['gamma'].tolist())
+    simu_result['DA'] = calculate_DA(simu_result['gamma'].tolist())
+
+    test_trimmed = test_result[test_result['DA'] < DA_lim].copy()
+    simu_trimmed = simu_result[simu_result['DA'] < DA_lim].copy()
+
+    test_trimmed = eval_sampling(test_trimmed, 'n', nforn=nforn)
+    simu_trimmed = eval_sampling(simu_trimmed, 'n', nforn=nforn)
+
+    gamma_max = DA_lim * 0.5
+    p_test = test_trimmed['p'].max()
+    p_simu = simu_trimmed['p'].max()
+    n_test = test_trimmed['n'].max()
+    n_simu = simu_trimmed['n'].max()
+    tau_test = test_trimmed['tau'].max()
+    tau_simu = simu_trimmed['tau'].max()
+
+    dis_ref = abs(max(n_simu+1,n_test+1)/min(n_simu+1,n_test+1) - 1)
+    if dis_ref  > 1.0:
+        return dis_ref
+    
+    else:
+        test_trimmed['gamma_1'] = test_trimmed['gamma'] / gamma_max
+        test_trimmed['p_1'] = test_trimmed['p'] / p_test
+        simu_trimmed['gamma_1'] = simu_trimmed['gamma'] / gamma_max
+        simu_trimmed['p_1'] = simu_trimmed['p'] / p_simu
+
+        test_trimmed['n_1'] = test_trimmed['n'] / n_test
+        simu_trimmed['n_1'] = simu_trimmed['n'] / n_test
+
+        test_trimmed['tau_1'] = test_trimmed['tau'] / tau_test
+        simu_trimmed['tau_1'] = simu_trimmed['tau'] / tau_simu
+         
+    set_A = test_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    set_B = simu_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    return hausdorff_distance_KD(set_A, set_B) + abs(simu_trimmed['p_1'].min() - test_trimmed['p_1'].min()) * 100.0
+
+def eval_undrained_cyc_torsion8(test_file:str,simu_file:str,DA_lim = 0.075,nforn = 24):
+    """
+    Evaluate undrained cyclic torsion test data by comparing test and simulation results using Hausdorff distance.
+
+    Parameters:
+    - test_file (str): File path for the test results.
+    - simu_file (str): File path for the simulation results.
+    - DA_lim (float): Limit for DA, double amplitude strain
+    - nforn (int): Number of samples per cycle.
+
+    Returns:
+    - float: Hausdorff distance or discrepancy ratio between the two datasets, or error code if files do not exist.
+    """
+    try:
+        test_result = pd.read_csv(test_file)
+        simu_result = pd.read_csv(simu_file)
+    except FileNotFoundError:
+        return 99  # Return error code if files not found
+    
+    simu_result = simu_result.dropna()
+    if simu_result.shape[0] == 0:
+        print(f'Nan in {simu_file}')
+        return 99
+    
+    test_result['DA'] = calculate_DA(test_result['gamma'].tolist())
+    simu_result['DA'] = calculate_DA(simu_result['gamma'].tolist())
+
+    test_trimmed = test_result[test_result['DA'] < DA_lim].copy()
+    simu_trimmed = simu_result[simu_result['DA'] < DA_lim].copy()
+
+    test_trimmed = eval_sampling(test_trimmed, 'n', nforn=nforn)
+    simu_trimmed = eval_sampling(simu_trimmed, 'n', nforn=nforn)
+
+    gamma_max = DA_lim * 0.5
+    p_test = test_trimmed['p'].max()
+    p_simu = simu_trimmed['p'].max()
+    n_test = test_trimmed['n'].max()
+    # n_simu = simu_trimmed['n'].max()
+    tau_test = test_trimmed['tau'].max()
+    tau_simu = simu_trimmed['tau'].max()
+
+
+    test_trimmed['gamma_1'] = test_trimmed['gamma'] / gamma_max
+    test_trimmed['p_1'] = test_trimmed['p'] / p_test
+    simu_trimmed['gamma_1'] = simu_trimmed['gamma'] / gamma_max
+    simu_trimmed['p_1'] = simu_trimmed['p'] / p_simu
+    test_trimmed['n_1'] = test_trimmed['n'] / n_test
+    simu_trimmed['n_1'] = simu_trimmed['n'] / n_test
+    test_trimmed['tau_1'] = test_trimmed['tau'] / tau_test
+    simu_trimmed['tau_1'] = simu_trimmed['tau'] / tau_simu
+         
+    set_A = test_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    set_B = simu_trimmed[['n_1','gamma_1','p_1', 'tau_1']].to_numpy()
+    return hausdorff_distance_KD(set_A, set_B)
