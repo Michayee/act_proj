@@ -296,7 +296,7 @@ class ExpTarget:
                     file_paths = {
                         'initialStress.dat': ' '.join(f'{x:.3f}' for x in stress_initial),
                         'initialVoidRatio.dat': f'{e_in:.5f}',
-                        'shearStrain.dat': f'{e_a:.5f}'
+                        'axialStrain.dat': f'{e_a:.5f}'
                     }
                     for file_name, content in file_paths.items():
                         with open(os.path.join(simu_folder, file_name), 'w') as file:
